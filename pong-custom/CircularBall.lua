@@ -12,13 +12,13 @@
     scoring a point for the opponent.
 ]]
 
-Ball = Class{}
+CircularBall = Class{}
 
-function Ball:init(x, y, width, height)
+function CircularBall:init(x, y, radius, segments)
     self.x = x
     self.y = y
-    self.width = width
-    self.height = height
+    self.radius = radius
+    self.segments = segments
 
     -- these variables are for keeping track of our velocity on both the
     -- X and Y axis, since the ball can move in two dimensions
@@ -30,16 +30,16 @@ end
     Expects a paddle as an argument and returns true or false, depending
     on whether their rectangles overlap.
 ]]
-function Ball:collides(paddle)
+function CircularBall:collides(paddle)
     -- first, check to see if the left edge of either is farther to the right
     -- than the right edge of the other
-    if self.x > paddle.x + paddle.width or paddle.x > self.x + self.width then
+    if self.x + self.radius > paddle.x + paddle.width or paddle.x > self.x + self.radius then
         return false
     end
 
     -- then check to see if the bottom edge of either is higher than the top
     -- edge of the other
-    if self.y > paddle.y + paddle.height or paddle.y > self.y + self.height then
+    if self.y +self.radius > paddle.y + paddle.height or paddle.y > self.y + self.radius then
         return false
     end 
 
@@ -50,18 +50,18 @@ end
 --[[
     Places the ball in the middle of the screen, with no movement.
 ]]
-function Ball:reset()
-    self.x = VIRTUAL_WIDTH / 2 - 10
-    self.y = VIRTUAL_HEIGHT / 2 - 10
+function CircularBall:reset()
+    self.x = VIRTUAL_WIDTH / 2 
+    self.y = VIRTUAL_HEIGHT / 2 
     self.dx = 0
     self.dy = 0
 end
 
-function Ball:update(dt)
+function CircularBall:update(dt)
     self.x = self.x + self.dx * dt
     self.y = self.y + self.dy * dt
 end
 
-function Ball:render()
-    love.graphics.rectangle('fill', self.x, self.y, self.width, self.height)
+function CircularBall:render()
+    love.graphics.circle('fill', self.x, self.y, self.radius, self.segments)
 end

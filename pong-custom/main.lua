@@ -39,16 +39,19 @@ require 'Paddle'
 -- but which will mechanically function very differently
 require 'Ball'
 
+-- our CircularBall class
+require 'CircularBall'
+
 -- size of our actual window
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 
 -- size we're trying to emulate with push
-VIRTUAL_WIDTH = 432
-VIRTUAL_HEIGHT = 243
+VIRTUAL_WIDTH = 1280
+VIRTUAL_HEIGHT = 720
 
 -- paddle movement speed
-PADDLE_SPEED = 200
+PADDLE_SPEED = 1000
 
 --[[
     Called just once at the beginning of the game; used to set up
@@ -58,7 +61,7 @@ function love.load()
     -- set love's default filter to "nearest-neighbor", which essentially
     -- means there will be no filtering of pixels (blurriness), which is
     -- important for a nice crisp, 2D look
-    love.graphics.setDefaultFilter('nearest', 'nearest')
+    -- love.graphics.setDefaultFilter('nearest', 'nearest')
 
     -- set the title of our application window
     love.window.setTitle('Pong')
@@ -67,9 +70,9 @@ function love.load()
     math.randomseed(os.time())
 
     -- initialize our nice-looking retro text fonts
-    smallFont = love.graphics.newFont('font.ttf', 8)
-    largeFont = love.graphics.newFont('font.ttf', 16)
-    scoreFont = love.graphics.newFont('font.ttf', 32)
+    smallFont = love.graphics.newFont('LoveAmsterdamSansFilledRegular-z2X0.ttf', 32)
+    largeFont = love.graphics.newFont('LoveAmsterdamSansFilledRegular-z2X0.ttf', 64)
+    scoreFont = love.graphics.newFont('LoveAmsterdamSansFilledRegular-z2X0.ttf', 128)
     love.graphics.setFont(smallFont)
 
     -- set up our sound effects; later, we can just index this table and
@@ -89,13 +92,15 @@ function love.load()
         canvas = false
     })
 
+   
     -- initialize our player paddles; make them global so that they can be
     -- detected by other functions and modules
-    player1 = Paddle(10, 30, 5, 20)
-    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
+    player1 = Paddle(10, 30, 25, 100)
+    player2 = Paddle(VIRTUAL_WIDTH - 35, VIRTUAL_HEIGHT - 110, 25, 100)
 
     -- place a ball in the middle of the screen
-    ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
+    -- ball = Ball(VIRTUAL_WIDTH / 2 - 10, VIRTUAL_HEIGHT / 2 - 10, 20, 20)
+    ball = CircularBall(VIRTUAL_WIDTH / 2 - 10, VIRTUAL_HEIGHT / 2 - 10, 10, 10)
 
     -- initialize score variables
     player1Score = 0
@@ -139,11 +144,11 @@ function love.update(dt)
     if gameState == 'serve' then
         -- before switching to play, initialize ball's velocity based
         -- on player who last scored
-        ball.dy = math.random(-50, 50)
+        ball.dy = math.random(-250, 250)
         if servingPlayer == 1 then
-            ball.dx = math.random(140, 200)
+            ball.dx = math.random(500, 800)
         else
-            ball.dx = -math.random(140, 200)
+            ball.dx = -math.random(500, 800)
         end
     elseif gameState == 'play' then
         -- detect ball collision with paddles, reversing dx if true and
@@ -151,26 +156,26 @@ function love.update(dt)
         -- at which it collided, then playing a sound effect
         if ball:collides(player1) then
             ball.dx = -ball.dx * 1.03
-            ball.x = player1.x + 5
+            ball.x = player1.x + 25 + ball.radius
 
             -- keep velocity going in the same direction, but randomize it
             if ball.dy < 0 then
-                ball.dy = -math.random(10, 150)
+                ball.dy = -math.random(50, 750)
             else
-                ball.dy = math.random(10, 150)
+                ball.dy = math.random(50, 750)
             end
 
             sounds['paddle_hit']:play()
         end
         if ball:collides(player2) then
             ball.dx = -ball.dx * 1.03
-            ball.x = player2.x - 4
+            ball.x = player2.x - ball.radius
 
             -- keep velocity going in the same direction, but randomize it
             if ball.dy < 0 then
-                ball.dy = -math.random(10, 150)
+                ball.dy = -math.random(50, 750)
             else
-                ball.dy = math.random(10, 150)
+                ball.dy = math.random(50, 750)
             end
 
             sounds['paddle_hit']:play()
@@ -178,15 +183,15 @@ function love.update(dt)
 
         -- detect upper and lower screen boundary collision, playing a sound
         -- effect and reversing dy if true
-        if ball.y <= 0 then
-            ball.y = 0
+        if ball.y - ball.radius <= 0 then
+            ball.y = 0 + ball.radius
             ball.dy = -ball.dy
             sounds['wall_hit']:play()
         end
 
         -- -4 to account for the ball's size
-        if ball.y >= VIRTUAL_HEIGHT - 4 then
-            ball.y = VIRTUAL_HEIGHT - 4
+        if ball.y + ball.radius >= VIRTUAL_HEIGHT then
+            ball.y = VIRTUAL_HEIGHT - ball.radius
             ball.dy = -ball.dy
             sounds['wall_hit']:play()
         end
@@ -310,13 +315,13 @@ function love.draw()
         -- UI messages
         love.graphics.setFont(smallFont)
         love.graphics.printf('Welcome to Pong!', 0, 10, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf('Press Enter to begin!', 0, 20, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Press Enter to begin!', 0, 40, VIRTUAL_WIDTH, 'center')
     elseif gameState == 'serve' then
         -- UI messages
         love.graphics.setFont(smallFont)
         love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!", 
             0, 10, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Press Enter to serve!', 0, 40, VIRTUAL_WIDTH, 'center')
     elseif gameState == 'play' then
         -- no UI messages to display in play
     elseif gameState == 'done' then
@@ -325,7 +330,7 @@ function love.draw()
         love.graphics.printf('Player ' .. tostring(winningPlayer) .. ' wins!',
             0, 10, VIRTUAL_WIDTH, 'center')
         love.graphics.setFont(smallFont)
-        love.graphics.printf('Press Enter to restart!', 0, 30, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Press Enter to restart!', 0, 70, VIRTUAL_WIDTH, 'center')
     end
 
     -- show the score before ball is rendered so it can move over the text
@@ -348,10 +353,10 @@ end
 function displayScore()
     -- score display
     love.graphics.setFont(scoreFont)
-    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 - 50,
-        VIRTUAL_HEIGHT / 3)
-    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30,
-        VIRTUAL_HEIGHT / 3)
+    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 - 300,
+        10)
+    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 280,
+        10)
 end
 
 --[[
